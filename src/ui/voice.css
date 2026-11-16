@@ -1,0 +1,197 @@
+/* ───────────── chat de voz ───────────── */
+
+.voice-ctl {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.voice-ctl .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.voice-ctl .btn .sprite {
+  margin: -2px 0 -3px -2px;
+}
+
+.voice-mic.primary .sprite,
+.voice-mic.danger .sprite {
+  filter: drop-shadow(0 1px 0 rgba(30, 14, 6, 0.35));
+}
+
+/* iconito junto al nombre */
+.voice-badge {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  background: var(--water-1);
+  box-shadow: var(--pxb2);
+  margin: 2px 4px;
+}
+
+.voice-badge.muted {
+  background: #ddd6c8;
+}
+
+.voice-badge.speaking {
+  background: #c7eaa0;
+  box-shadow:
+    var(--pxb2),
+    0 0 0 4px var(--leaf-1);
+  animation: voz-hablar 0.36s steps(2, jump-none) infinite alternate;
+}
+
+@keyframes voz-hablar {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2px);
+  }
+}
+
+/* panel de quién está en la voz */
+.voice-pop {
+  position: fixed;
+  z-index: 45;
+  margin: 0;
+  padding: 10px 12px 8px;
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.voice-pop-title {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.voice-list {
+  display: grid;
+  gap: 4px;
+}
+
+.voice-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 96px;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px 2px 0;
+  background: rgba(255, 250, 240, 0.55);
+  box-shadow: var(--pxb2);
+  margin: 2px;
+}
+
+.voice-row.speaking {
+  background: #e4f6cc;
+}
+
+.voice-name {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.voice-link {
+  font-size: 12px;
+  text-align: right;
+  opacity: 0.75;
+}
+
+.voice-link.failed {
+  color: #a8322a;
+  opacity: 1;
+}
+
+.voice-empty,
+.voice-tip {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.voice-notice {
+  font-size: 13px;
+  padding: 6px 8px;
+  background: #fbe2c0;
+  box-shadow: var(--pxb2);
+  margin: 2px;
+}
+
+/* deslizador de volumen pixelado */
+.voice-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  margin: 0;
+  background: var(--wood-2);
+  box-shadow: var(--pxb2);
+  cursor: pointer;
+}
+
+.voice-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 16px;
+  border: none;
+  border-radius: 0;
+  background: var(--gold);
+  box-shadow:
+    0 -2px 0 0 var(--line),
+    0 2px 0 0 var(--line),
+    -2px 0 0 0 var(--line),
+    2px 0 0 0 var(--line);
+}
+
+.voice-range::-moz-range-thumb {
+  width: 10px;
+  height: 16px;
+  border: none;
+  border-radius: 0;
+  background: var(--gold);
+  box-shadow:
+    0 -2px 0 0 var(--line),
+    0 2px 0 0 var(--line),
+    -2px 0 0 0 var(--line),
+    2px 0 0 0 var(--line);
+}
+
+.voice-range:focus-visible {
+  outline: 2px solid var(--water-4);
+  outline-offset: 4px;
+}
+
+/* en la sala de espera */
+.voice-lobby-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+}
+
+.voice-lobby-head b {
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .voice-mic-txt {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-badge.speaking {
+    animation: none;
+  }
+}

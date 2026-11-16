@@ -1,0 +1,1117 @@
+/* ───────────── Isla Cosecha: mesa ───────────── */
+
+.isla-game {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  overflow: hidden;
+}
+
+.scene-bg.ocean {
+  background: #3aa6d8;
+}
+
+.isla-game > *:not(.scene-bg):not(.fx-layer):not(.ocean-life):not(.modal-backdrop) {
+  position: relative;
+  z-index: 2;
+}
+
+.isla-game .topbar .logo.mini {
+  font-size: 30px;
+}
+
+/* cifras: legibles y del mismo ancho */
+.ip-vp,
+.ip-stat,
+.isla-dice-sum,
+.isla-bank-cell,
+.me-pieces,
+.res-count,
+.stepper b,
+.res-inline-item {
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.turn-pill {
+  border-left: 6px solid var(--pc, transparent);
+}
+
+.goal-pill {
+  background: var(--paper);
+  box-shadow: var(--pxb2);
+  padding: 3px 10px 4px;
+  font-size: 14px;
+  margin: 2px;
+}
+
+.isla-main {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr) 222px;
+  gap: 10px;
+  min-height: 0;
+}
+
+.isla-players,
+.isla-right {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  padding: 2px;
+}
+
+.isla-board-wrap {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* ── la isla ── */
+
+.isla-board {
+  position: relative;
+  flex: none;
+}
+
+.isla-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.isla-world > *,
+.isla-world .isla-port,
+.isla-world .isla-boat {
+  position: absolute;
+}
+
+.isla-world .sprite,
+.isla-canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.isla-canvas {
+  left: 0;
+  top: 0;
+}
+
+.isla-token,
+.isla-road,
+.isla-piece,
+.isla-fox,
+.isla-port,
+.isla-boat {
+  line-height: 0;
+}
+
+.isla-road,
+.isla-piece,
+.isla-boat,
+.isla-fox {
+  pointer-events: none;
+}
+
+.isla-boat {
+  animation: boat-bob 2.6s steps(2) infinite;
+}
+
+@keyframes boat-bob {
+  50% {
+    transform: translateY(1px);
+  }
+}
+
+.isla-token.hot {
+  animation: token-hot 0.5s steps(2) 5;
+  z-index: 2;
+}
+
+.isla-token.hot::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px #fff,
+    0 0 0 2px #ffd84a;
+}
+
+@keyframes token-hot {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.isla-token.robbed {
+  filter: grayscale(0.7) brightness(0.82);
+}
+
+.isla-piece {
+  animation: piece-drop 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  z-index: 3;
+}
+
+.isla-piece.villa {
+  z-index: 4;
+}
+
+@keyframes piece-drop {
+  from {
+    transform: translateY(-16px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+  }
+}
+
+.isla-road {
+  animation: road-in 0.36s steps(4) both;
+  z-index: 2;
+}
+
+@keyframes road-in {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.isla-fox {
+  z-index: 5;
+  transition:
+    left 0.6s cubic-bezier(0.4, 0, 0.3, 1),
+    top 0.6s cubic-bezier(0.4, 0, 0.3, 1);
+}
+
+.isla-fox .sprite {
+  animation: fox-breathe 2.2s steps(2) infinite;
+}
+
+@keyframes fox-breathe {
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+/* zonas donde se puede construir */
+.isla-vert-target,
+.isla-edge-target,
+.isla-hex-target {
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 8;
+  line-height: 0;
+}
+
+.isla-vert-target::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px #3a2448,
+    0 0 0 2px rgba(255, 255, 255, 0.6);
+  animation: spot-pulse 0.8s steps(2) infinite;
+}
+
+@keyframes spot-pulse {
+  50% {
+    transform: scale(0.7);
+    background: #ffe88a;
+  }
+}
+
+.isla-vert-hover,
+.isla-edge-hover {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+}
+
+.isla-edge-hover {
+  inset: 0;
+}
+
+.isla-vert-target:hover::before,
+.isla-vert-target:focus-visible::before {
+  display: none;
+}
+
+.isla-vert-target:hover .isla-vert-hover,
+.isla-vert-target:focus-visible .isla-vert-hover,
+.isla-edge-target:hover .isla-edge-hover,
+.isla-edge-target:focus-visible .isla-edge-hover {
+  display: block;
+}
+
+.isla-edge-target > .sprite {
+  animation: ghost-pulse 0.8s steps(2) infinite;
+}
+
+.isla-edge-target:hover > .sprite {
+  visibility: hidden;
+}
+
+@keyframes ghost-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.isla-hex-target {
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: rgba(255, 246, 210, 0.18);
+  animation: hex-pulse 1s steps(2) infinite;
+  z-index: 6;
+}
+
+.isla-hex-target:hover {
+  background: rgba(255, 236, 160, 0.55);
+  animation: none;
+}
+
+@keyframes hex-pulse {
+  50% {
+    background: rgba(255, 246, 210, 0.36);
+  }
+}
+
+.isla-offer-banner {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 12px 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  z-index: 10;
+  max-width: 96%;
+}
+
+/* ── jugadores ── */
+
+.isla-player {
+  position: relative;
+  padding: 6px 8px 7px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: none;
+}
+
+.isla-player::before,
+.isla-me::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: var(--pc);
+  box-shadow: inset -2px 0 0 rgba(0, 0, 0, 0.2);
+}
+
+.isla-player.turn,
+.isla-me.turn {
+  box-shadow:
+    var(--pxb),
+    inset 0 -4px 0 0 var(--paper-shade),
+    0 0 0 5px var(--gold),
+    var(--drop);
+}
+
+.isla-player.me {
+  background: linear-gradient(180deg, #fffbe8 0%, #fbf0d6 100%);
+}
+
+.ip-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ip-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ip-name .tag {
+  font-size: 10px;
+  padding: 1px 4px 2px;
+}
+
+.ip-name.big {
+  font-size: 18px;
+}
+
+.ip-vp {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+  background: #fffaf0;
+  padding: 2px 6px 3px;
+  box-shadow: 0 0 0 2px var(--pc), 0 3px 0 0 rgba(58, 36, 24, 0.25);
+  margin: 2px;
+}
+
+.ip-vp small {
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 2px;
+}
+
+.ip-vp.big {
+  font-size: 26px;
+}
+
+.ip-stats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ip-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 14px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 1px 5px 2px 3px;
+  box-shadow: 0 0 0 2px rgba(58, 36, 24, 0.25);
+}
+
+.ip-stat.gold {
+  background: var(--gold);
+}
+
+.ip-badges,
+.me-badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.ip-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--gold);
+  padding: 1px 5px 2px;
+  box-shadow: 0 0 0 2px var(--gold-dark);
+}
+
+.ip-wait {
+  font-size: 12px;
+  color: var(--wood-5);
+}
+
+.ip-turn {
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gold);
+  text-shadow:
+    2px 0 0 var(--ink),
+    -2px 0 0 var(--ink),
+    0 2px 0 var(--ink),
+    0 -2px 0 var(--ink);
+  animation: turn-nudge 0.6s steps(2) infinite;
+  font-size: 18px;
+}
+
+@keyframes turn-nudge {
+  50% {
+    transform: translate(3px, -50%);
+  }
+}
+
+/* ── columna derecha ── */
+
+.isla-dice {
+  padding: 8px 10px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 80px;
+  flex: none;
+}
+
+.isla-dice-faces {
+  display: flex;
+  gap: 6px;
+  line-height: 0;
+}
+
+.isla-dice.rolling .isla-dice-faces,
+.isla-dice.rolling .isla-dice-sum {
+  visibility: hidden;
+}
+
+.isla-dice-sum {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+  background: #fffaf0;
+  padding: 5px 10px 6px;
+  box-shadow: var(--pxb2), 0 3px 0 0 rgba(58, 36, 24, 0.25);
+  margin: 2px;
+}
+
+.isla-dice-sum.seven {
+  color: #fff;
+  background: #d8483c;
+}
+
+.isla-bank,
+.isla-costs {
+  padding: 7px 9px 9px;
+  flex: none;
+}
+
+.isla-bank-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.isla-bank-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.isla-bank-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 15px;
+}
+
+.isla-cost {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  font-size: 13px;
+}
+
+.isla-cost small {
+  margin-left: auto;
+  font-weight: 700;
+  color: var(--wood-5);
+}
+
+.isla-cost-icon {
+  width: 18px;
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.isla-cost-name {
+  width: 46px;
+  font-weight: 700;
+}
+
+.cost-row {
+  display: inline-flex;
+  gap: 1px;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+/* ── franja inferior ── */
+
+.isla-bottom {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 270px;
+  gap: 10px;
+  align-items: stretch;
+  height: 184px;
+}
+
+.isla-bottom .side {
+  height: 100%;
+  margin: 3px;
+  min-height: 0;
+}
+
+.isla-me {
+  position: relative;
+  padding: 8px 10px 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.me-pieces {
+  display: flex;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.me-pieces span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+
+.isla-hand-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.isla-hand-col .prompt-bar {
+  min-height: 50px;
+  margin: 3px;
+  flex: none;
+  justify-content: center;
+}
+
+.prompt-bar.mine {
+  background: linear-gradient(180deg, #fffbe2 0%, #fff2c0 100%);
+}
+
+.end-btn {
+  margin-left: 8px;
+}
+
+.prompt-buttons {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn.build {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px 5px;
+  font-size: 17px;
+}
+
+.roll-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.isla-hand {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 12px 6px;
+  margin: 3px;
+  scrollbar-width: thin;
+  /* tablones de muelle */
+  background:
+    repeating-linear-gradient(180deg, transparent 0 22px, rgba(90, 50, 30, 0.35) 22px 24px),
+    linear-gradient(180deg, #d08a52 0%, #c27a46 100%);
+  box-shadow:
+    var(--pxb),
+    inset 0 4px 0 0 rgba(255, 220, 170, 0.35),
+    inset 0 -5px 0 0 #96633a,
+    var(--drop);
+}
+
+.hand-sep {
+  width: 3px;
+  align-self: stretch;
+  margin: 6px 4px;
+  background: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0 6px, transparent 6px 10px);
+  flex: none;
+}
+
+.res-card,
+.dev-card {
+  position: relative;
+  flex: none;
+  width: 64px;
+  height: 88px;
+  border: none;
+  font: inherit;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 3px;
+  background: linear-gradient(180deg, #fffaf0 0%, var(--paper) 70%, #ecd6a8 100%);
+  box-shadow:
+    var(--pxb2),
+    inset 0 0 0 3px var(--rc, var(--wood-3)),
+    0 4px 0 0 rgba(20, 50, 80, 0.35);
+  transition: transform 0.1s steps(2);
+}
+
+.res-card.r-madera {
+  --rc: #3f8a46;
+}
+.res-card.r-arcilla {
+  --rc: #c9563a;
+}
+.res-card.r-lana {
+  --rc: #8fcc5c;
+}
+.res-card.r-trigo {
+  --rc: #e8b23a;
+}
+.res-card.r-piedra {
+  --rc: #8f8aa6;
+}
+
+.res-card.empty {
+  opacity: 0.45;
+  filter: saturate(0.4);
+}
+
+.res-card:not(:disabled) {
+  cursor: pointer;
+}
+
+.res-card:not(:disabled):hover,
+.res-card.selected {
+  transform: translateY(-4px);
+}
+
+.res-card.selected {
+  box-shadow:
+    var(--pxb2),
+    inset 0 0 0 3px var(--rc, var(--wood-3)),
+    0 0 0 5px var(--gold),
+    0 4px 0 0 rgba(20, 50, 80, 0.35);
+}
+
+.res-name {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  max-width: 100%;
+  padding: 0 2px;
+}
+
+.res-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  color: #fff;
+  background: var(--ink);
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.res-card.small {
+  width: 74px;
+  height: 66px;
+}
+
+.dev-card {
+  --rc: #3fae5a;
+  background: linear-gradient(180deg, #f2fbe8 0%, #e2f4d0 70%, #c8e6ae 100%);
+}
+
+.dev-card.treasure {
+  --rc: var(--gold-dark);
+  background: linear-gradient(180deg, #fff8dc 0%, #fff0c4 100%);
+}
+
+.dev-card:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.dev-card.ready {
+  cursor: pointer;
+  animation: dev-ready 1s steps(2) infinite;
+}
+
+.dev-card.ready:hover {
+  transform: translateY(-5px);
+}
+
+@keyframes dev-ready {
+  50% {
+    box-shadow:
+      var(--pxb2),
+      inset 0 0 0 3px var(--rc),
+      0 0 0 4px #b8f08a,
+      0 4px 0 0 rgba(20, 50, 80, 0.35);
+  }
+}
+
+/* ── comercio y ventanas ── */
+
+.res-inline {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.res-inline-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-weight: 700;
+}
+
+.trade-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.trade-resp {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 1px 5px 2px;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 2px rgba(58, 36, 24, 0.3);
+}
+
+.trade-resp.accept {
+  background: #b8f08a;
+}
+
+.trade-resp.reject {
+  background: #ffc8c0;
+  opacity: 0.8;
+}
+
+.trade-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.offer-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 600px) {
+  .offer-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+.res-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.res-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.res-pick-name {
+  flex: 1;
+  font-weight: 700;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stepper b {
+  min-width: 18px;
+  text-align: center;
+}
+
+.offer-timer {
+  height: 6px;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold-dark);
+  margin: 4px 2px 10px;
+  transform-origin: left;
+  animation: offer-shrink 30s linear forwards;
+}
+
+@keyframes offer-shrink {
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.winner-row {
+  border-left: 6px solid var(--pc);
+}
+
+/* ── animaciones ── */
+
+.isla-banner {
+  border-left: 8px solid var(--pc, var(--gold-dark));
+}
+
+.isla-spot {
+  left: 50%;
+  top: 44%;
+  padding: 12px 24px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(180deg, #f2fbe8 0%, #e2f4d0 100%);
+  box-shadow:
+    var(--pxb),
+    0 0 0 6px var(--pc, #3fae5a),
+    0 10px 0 rgba(0, 0, 0, 0.3);
+}
+
+.isla-spot-title {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.isla-spot-who {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--wood-5);
+}
+
+.fx-text.isla-sum {
+  font-size: 56px;
+  color: #fff6c8;
+}
+
+.isla-confetti {
+  width: 8px;
+  height: 8px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25);
+}
+
+/* ── vida en el mar ── */
+
+.ocean-life {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ocean-wave,
+.ocean-spark {
+  position: absolute;
+  line-height: 0;
+}
+
+.ocean-wave {
+  animation: wave-sway 4s steps(4) infinite alternate;
+}
+
+@keyframes wave-sway {
+  0% {
+    transform: translateX(0);
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(12px);
+    opacity: 0.2;
+  }
+}
+
+.ocean-spark {
+  width: 3px;
+  height: 3px;
+  background: #fff;
+  animation: spark-twinkle 3s steps(2) infinite;
+}
+
+@keyframes spark-twinkle {
+  0%,
+  70% {
+    opacity: 0;
+  }
+  80% {
+    opacity: 1;
+  }
+}
+
+.gull-lane {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 14%;
+}
+
+.gull {
+  position: absolute;
+  left: -40px;
+  line-height: 0;
+  animation: gull-fly 34s linear infinite;
+  animation-delay: 6s;
+}
+
+.gull .sprite {
+  animation: gull-flap 0.5s steps(2) infinite;
+}
+
+@keyframes gull-fly {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(28vw, 20px);
+  }
+  50% {
+    transform: translate(56vw, -6px);
+  }
+  75% {
+    transform: translate(84vw, 14px);
+  }
+  80%,
+  100% {
+    transform: translate(110vw, 0);
+  }
+}
+
+@keyframes gull-flap {
+  50% {
+    transform: scaleY(0.55);
+  }
+}
+
+/* ── tamaños de pantalla ── */
+
+@media (max-width: 1250px) and (min-width: 861px) {
+  .isla-main {
+    grid-template-columns: 200px minmax(0, 1fr) 196px;
+  }
+  .isla-bottom {
+    grid-template-columns: 190px minmax(0, 1fr) 230px;
+  }
+}
+
+@media (max-height: 760px) and (min-width: 861px) {
+  .isla-bottom {
+    height: 160px;
+  }
+  .res-card,
+  .dev-card {
+    width: 58px;
+    height: 76px;
+  }
+}
+
+@media (max-width: 860px) {
+  .isla-game {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+  }
+  .isla-main {
+    display: contents;
+  }
+  .isla-board-wrap {
+    height: min(88vw, 520px);
+    order: 1;
+  }
+  .isla-bottom {
+    order: 2;
+  }
+  .isla-players {
+    order: 3;
+  }
+  .isla-right {
+    order: 4;
+  }
+  .isla-hand-col {
+    order: -1;
+  }
+  .goal-pill {
+    display: none;
+  }
+  .isla-players {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .isla-players .isla-player {
+    min-width: 170px;
+  }
+  .isla-right {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .isla-bottom {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .isla-bottom .side {
+    height: 220px;
+  }
+  .isla-hand {
+    min-height: 110px;
+  }
+}
